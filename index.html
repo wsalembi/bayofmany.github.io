@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Peapod</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="An object-graph-wrapper for TinkerPop 3 graphs">
+    <link href="static/bootstrap-combined.min.css" rel="stylesheet">
+    <link href="static/app.css" rel="stylesheet">
+    <link href="static/app-theme.css" rel="stylesheet">
+    <link href="http://fonts.googleapis.com/css?family=Roboto:400,300italic,100,100italic,300" rel="stylesheet" type="text/css">
+    <!--[if lt IE 9]><script src="static/html5shiv.min.js"></script><![endif]-->
+  </head>
+  <body data-target=".content-nav">
+    <header>
+      <div class="container">
+        <div class="row">
+          <div class="span5">
+            <h1>Peapod</h1>
+          </div>
+          <div class="span7">
+            <menu>
+              <ul>
+                <li><a href="#download" class="menu download">Download <span class="version-tag">Latest</span></a></li>
+                <li><a href="http://github.com/bayofmany/peapod" data-title="View GitHub Project" class="menu github"><img src="static/icon-github.png" alt="GitHub"/></a></li>
+                <li><a href="http://bayofmany.github.io/" data-title="Bay of Many" class="menu bayofmany"><img src="static/icon-bayofmany.png" alt="Bay of Many"/></a></li>
+              </ul>
+            </menu>
+          </div>
+      </div>
+    </header>
+    <section id="subtitle">
+      <div class="container">
+        <div class="row">
+          <div class="span12">
+            <h2>An object-graph-wrapper for <strong>TinkerPop 3</strong> graphs</h2>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section id="body">
+      <div class="container">
+        <div class="row">
+          <div class="span9">
+            <h3 id="introduction">Introduction</h3>
+            <p>Peapod maps your <a href="http://www.tinkerpop.com/docs/3.0.0.M7/" target="_blank">TinkerPop 3</a> graph onto a rich Java domain model. Peapod was developed as an alternative to the Frames module in TinkerPop 2. <strong>Disclaimer: version 0.1.0 is still an early and experimental release.</strong></p>
+			<p>You start by specifying your graph structure through abstract classes enriched with Peapod annotations. Peapod will then generate <u>at compile-time</u> all the implementation classes, saving you from copy-paste errors and writing boilerplate code.</p>
+            <pre class="prettyprint">@Vertex
+public abstract class Person {
+  public abstract String getName();
+  public abstract List&lt;Created&gt; getCreated();
+}
+
+@Edge
+public abstract class Created {
+      public abstract Float getWeight();
+  @In public abstract Software getSoftware();
+}
+
+@Vertex
+public abstract class Software {
+    public abstract String getName();
+}
+</pre>
+            <p>Starting from a <code>FramedGraph</code> instance, you can query and manipulate the TinkerPop 3 graph. All reads and writes are immediately propagated to the wrapped TinkerPop 3 elements.</p>
+            <pre class="prettyprint">FramedGraph graph = new FramedGraph(TinkerGraph.open(), Person.class.getPackage());
+
+Person person = graph.addVertex(1, Person.class);
+person.setName("alice");
+
+List&lt;Person&gt; result = graph.V(Person.class).has("name", "alice").toList();
+assertEquals(1, result.size());</pre>
+			<p>Peapod is designed to have minimal overhead because code generation happens <u>at compile time</u> using Java annotation processors and reflection is limited to the absolute minimum <u>only at startup time</u>. The generated code is transparent can be easily debugged by the developer.</p>
+
+            <h3 id="framing">Framing</h3>
+            <p>Define your domain model using annotated anonymous classes. Peapod will generate TinkerPop 3-compliant source code to traverse and manipulate your graph.</p>
+
+            <h4>Vertices</h4>
+            <p>Create an abstract class and annotate with <code>@peapod.annotations.Vertex</code>. The class simple name will act as vertex label. You can alter this by setting the annotation value.</p>
+            <pre class="prettyprint">@Vertex
+public abstract class Person {}</pre>
+			<p>Next, define a list of vertex properties using abstract JavaBean setter and getter methods. The JavaBean property name will be used as vertex property name.</p>
+            <pre class="prettyprint">@Vertex
+public abstract class Person {
+  public abstract String getName();
+  public abstract void setName(String name);
+}</pre>
+			<p>The property name can be altered by adding the <code>@peapod.annotations.Property</code> annotation to any of the JavaBean methods.</p>
+            <pre class="prettyprint">@Vertex
+public abstract class Person {
+  @Property("name")
+  public abstract String getLastName();
+  public abstract void setLastName(String lastName);
+}</pre>
+            <p>For multi-properties you can also use adder and remover methods. Peapod recognizes singular and pluralized property names as belonging to the same property group.</p>
+            <pre class="prettyprint">@Vertex
+public abstract class Person {
+  public abstract List&lt;String&gt; getNames();
+  public abstract void addName(String name);
+  public abstract void removeName(String name);
+}</pre>
+
+            <h4>Edges</h4>
+            <p>In a similar way, you can frame TinkerPop 3 edges. The class simple name <u>in lowercase</u> will act as the edge label. You specify the adjacent vertices by using the <code>@In</code> and <code>@Out</code> annotations.</p>
+            <pre class="prettyprint">@Edge
+public abstract class Created {
+  public abstract Float getWeight();
+
+  @Out 
+  public abstract Person getPerson();
+  
+  @In  
+  public abstract Software getSoftware();
+}
+</pre>
+            <p>Next, you enrich the framed vertex classes with relations to the edge classes.</p>
+            <pre class="prettyprint">@Vertex
+public abstract class Person {
+  public abstract List&lt;Created&gt; getCreated();
+  public abstract Created addCreated(Software software);
+  public abstract Created removeCreated(Software software);
+}</pre>
+            <p>Whenever you don't like to frame the edge as a separate class, you can directly define a vertex relationship and annotate with <code>@peapod.annotations.Edge</code>. The direction is <u>by default outgoing.</u></p>
+            <pre class="prettyprint">@Vertex
+public abstract class Person {
+  @Edge("created")
+  public abstract List&lt;Software&gt; getSoftware();
+  public abstract void addSoftware(Software software);
+  public abstract void removeSoftware(Software software);
+}</pre>
+            <p>At this moment, only getter methods can be defined with a different direction, like <code>@In</code> or <code>@Both</code>.</p>
+            <pre class="prettyprint">@Vertex
+public abstract class Person {
+  @In
+  @Edge("knows")
+  public abstract List&lt;Person&gt; getKnownBy();
+}</pre>
+
+            <h4>Meta-properties</h4>
+            <p>Peapod supports meta-properties which is a new feature of TinkerPop 3. You simply define a framing class for the vertex property and add properties which will be mapped onto meta-properties. </p>
+			<p>You must obligatory implement the <code>FramedVertexProperty</code> interface in order to specify the vertex property type. <code>FramedVertexProperty</code> defines a <code>getValue()</code> and <code>setValue(T t)</code> method to alter the property value.</p>
+			<pre>@VertexProperty
+public abstract class Name implements FramedVertexProperty&lt;String&gt; {
+    public abstract String getAcl();
+    public abstract void setAcl(String acl);
+}</pre>
+            <p>Once the vertex property class is defined you can add it to a <code>@Vertex</code> class.</p>
+            <pre class="prettyprint">@Vertex
+public abstract class Person {
+  public abstract List&lt;Name&gt; getNames();
+  public abstract Name getName(String name);
+  public abstract Name addName(String name);
+  public abstract void removeName(String name);
+}</pre>
+
+
+            <h3 id="framedgraph">Framed graph</h3>
+            <p>The framed graph wraps a TinkerPop 3 <code>Graph</code> and delegates all queries and graph manipulations to the underlying graph. <code>FramedGraph</code> must be initialized with a base package. Peapod will recursively scan the provided package and search for framing classes annotated with <code>@Vertex</code>, <code>@VertexProperty</code> or <code>@Edge</code>.</p>
+            <pre class="prettyprint">FramedGraph graph = new FramedGraph(TinkerGraph.open(), Package.getPackage("org.bayofmany.application.model"));</pre>
+			<p>You create new vertices by specifying the framing class and an optional identifier if the TinkerPop 3 graph database supports it.</p>
+            <pre class="prettyprint">Person person = graph.addVertex(1, Person.class);
+person.setName("alice");</pre>
+			<p>You can retrieve a graph vertex by id. Peapod will infer the framing class from the vertex label.</p>
+            <pre class="prettyprint">Person person = graph.v(1);
+assertEquals("alice", person.getName());</pre>
+			<p>When the vertices in the graph don't define a label, you can still provide a framing class yourself.</p>
+            <pre class="prettyprint">Person person = graph.v(1, Person.class);
+assertEquals("alice", person.getName());</pre>
+			<p>You can query and navigate the graph starting from the framed graph and a framing class.</p>
+            <pre class="prettyprint">List&lt;Person&gt; result = graph.V(Person.class).has("name", "alice").toList();
+assertEquals(1, result.size());</pre>
+
+            <h3 id="traversals">Traversals</h3>
+			<p>Traversals in Peapod 0.1.0 are still very basic. The future goal is to generate more advanced traversal classes using the <a href="http://www.tinkerpop.com/docs/3.0.0.M7/#_domain_specific_languages" target="_blank">DSL framework</a> in TinkerPop 3. Because the graph structure is defined by the framing classes, Peapod would be able to define these traversal classes easily and save you from writing a lot of unnecessary boilerplate code.</p>
+			<p>Vertices can optionally implement the <code>FramedVertex</code> interface which defines a serie of traversal methods.</p>
+            <pre class="prettyprint">@Vertex
+public abstract class Person FramedVertex&lt;Person&gt; {
+  @Edge("knows")
+  public abstract List&lt;Person&gt; getKnowsPerson();
+  
+  public List&lt;Person&gt; getKnowsPersonsOlderThan(int age) {
+    return out("knows", Person.class).has("age", Compare.gt, age).toList();
+  }
+}
+
+assertThat(marko.getKnowsPersonsOlderThan(30), contains(josh));</pre>
+			
+
+            <h3 id="download">Download</h3>
+            <p><a href="https://search.maven.org/remote_content?g=org.bayofmany.peapod&a=peapod&v=LATEST" class="dl version-href">&darr; <span class="version-tag">Latest</span> JAR</a></p>
+            <p>The source code to the Peapod, its samples, and this website is <a href="http://github.com/bayofmany/peapod">available on GitHub</a>.</p>
+            <h4>Maven</h4>
+            <pre class="prettyprint">&lt;dependency>
+  &lt;groupId>org.bayofmany.peapod&lt;/groupId>
+  &lt;artifactId>peapod&lt;/artifactId>
+  &lt;version><span class="version pln"><em>0.1.0</em></span>&lt;/version>
+&lt;/dependency></pre>
+            <p>Peapod requires at minimum Java 8.</p>
+
+            <h3 id="license">License</h3>
+            <pre>Copyright 2015 Bay of Many.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.</pre>
+
+            <h3 id="acknowledgments">Acknowledgments</h3>
+				<p>Thanks to all the exceptional TinkerPop 3 talents for creating this amazing Open Source Graph Computing Framework.</p>
+				<p>Thanks to GitHub for providing the GIT repository.</p>
+				<p>Thanks to Cloudbees for providing the Jenkins build infrastructure.
+		  			<a href="https://bayofmany.ci.cloudbees.com/"><img src="https://camo.githubusercontent.com/ecfb6be535c96fc29a2eccd49149fc748bbfef95/68747470733a2f2f7777772e636c6f7564626565732e636f6d2f73697465732f64656661756c742f66696c65732f7374796c65732f6c617267652f7075626c69632f427574746f6e2d4275696c742d6f6e2d43422d312e706e67" width="150" align="right" data-canonical-src="https://www.cloudbees.com/sites/default/files/styles/large/public/Button-Built-on-CB-1.png" style="max-width:100%;"></a></p>
+				<p>Thanks to Sonatype for hosting Peapod in the central maven repository.</p>
+          </div>
+
+          <div class="span3">
+            <div class="content-nav" data-spy="affix" data-offset-top="80">
+              <ul class="nav nav-tabs nav-stacked primary">
+                <li><a href="#introduction">Introduction</a></li>
+                <li><a href="#framing">Framing</a></li>
+                <li><a href="#framedgraph">Framed graph</a></li>
+                <li><a href="#traversals">Traversals</a></li>
+                <li><a href="#download">Download</a></li>
+                <li><a href="#license">License</a></li>
+                <li><a href="#acknowledgments">Acknowledgments</a></li>
+              </ul>
+              <ul class="nav nav-pills nav-stacked secondary">
+                <li><a href="https://bayofmany.ci.cloudbees.com/job/Analyze%20peapod/site/peapod/apidocs/index.html">Javadoc</a></li>
+                <li><a href="http://stackoverflow.com/questions/tagged/peapod?sort=active">StackOverflow</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="span12 logo">
+            <a href="https://bayofmany.org"><img src="static/logo-bayofmany.png" alt="Bay of Many"/></a>
+          </div>
+        </div>
+      </div>
+    </section>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script src="static/bootstrap.min.js"></script>
+    <script src="static/jquery.smooth-scroll.min.js"></script>
+    <script src="static/jquery-maven-artifact.min.js"></script>
+    <script src="static/prettify.js"></script>
+    <script type="text/javascript">
+      $(function() {
+        // Syntax highlight code blocks.
+        prettyPrint();
+
+        // Spy on scroll position for real-time updating of current section.
+        $('body').scrollspy();
+
+        // Use smooth-scroll for internal links.
+        $('a').smoothScroll();
+
+        // Enable tooltips on the header nav image items.
+        $('.menu').tooltip({
+          placement: 'bottom',
+          trigger: 'hover',
+          container: 'body',
+          delay: {
+            show: 500,
+            hide: 0
+          }
+        });
+
+        // Look up the latest version of the library.
+        $.fn.artifactVersion('org.bayofmany.peapod', 'peapod', function(version, url) {
+          $('.version').text(version);
+          $('.version-tag').text('v' + version);
+          $('.version-href').attr('href', url);
+        });
+      });
+
+    </script>
+  </body>
+</html>
