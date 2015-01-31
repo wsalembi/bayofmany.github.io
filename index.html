@@ -159,6 +159,22 @@ public abstract class Person {
   public abstract void removeName(String name);
 }</pre>
 
+            <h4>Post construct</h4>
+			<p>Peaopod supports the <code>@javax.annotation.PostConstruct</code> annotation to initialize vertices when added to the framed graph.</p>
+            <pre class="prettyprint">@Vertex
+public abstract class Person {
+    public abstract Date getCreationTms();
+    public abstract void setCreationTms(Date date);
+
+    @PostConstruct
+    protected void init() {
+        setCreationTms(new Date());
+    }
+}
+
+Person person = graph.addVertex(Person.class);
+assertTrue(person.getCreationTms() != null);</pre>
+
 
             <h3 id="framedgraph">Framed graph</h3>
             <p>The framed graph wraps a TinkerPop 3 <code>Graph</code> and delegates all queries and graph manipulations to the underlying graph. <code>FramedGraph</code> must be initialized with a base package. Peapod will recursively scan the provided package and search for framing classes annotated with <code>@Vertex</code>, <code>@VertexProperty</code> or <code>@Edge</code>.</p>
