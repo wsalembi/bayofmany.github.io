@@ -43,8 +43,9 @@
         <div class="row">
           <div class="span9">
             <h3 id="introduction">Introduction</h3>
-            <p>Peapod maps your <a href="http://www.tinkerpop.com/docs/3.0.0.M7/" target="_blank">TinkerPop 3</a> graph onto a rich Java domain model. Peapod was developed as an alternative to the Frames module in TinkerPop 2. <strong>Disclaimer: version 0.1.0 is still an early and experimental release.</strong></p>
-			<p>You start by specifying your graph structure through abstract classes enriched with Peapod annotations. Peapod will then generate <u>at compile-time</u> all the implementation classes, saving you from copy-paste errors and writing boilerplate code.</p>
+            <p>Peapod maps your <a href="http://www.tinkerpop.com/docs/3.0.0.M7/" target="_blank">TinkerPop 3</a> graph onto a rich Java domain model. Peapod is developed as an alternative to Frames in TinkerPop 2.</p>
+			<p><strong>Disclaimer: version 0.1.0 is still an early and experimental release.</strong></p>
+			<p>You start by specifying your graph structure through abstract classes, enriched with Peapod annotations. Peapod will then generate <u>at compile-time</u> all the necessary implementation classes, saving you from writing boilerplate code and error-prone copy-pasting of vertex, edge and property labels.</p>
             <pre class="prettyprint">@Vertex
 public abstract class Person {
   public abstract String getName();
@@ -63,29 +64,34 @@ public abstract class Software {
 }
 </pre>
             <p>Starting from a <code>FramedGraph</code> instance, you can query and manipulate the TinkerPop 3 graph. All reads and writes are immediately propagated to the wrapped TinkerPop 3 elements.</p>
-            <pre class="prettyprint">FramedGraph graph = new FramedGraph(TinkerGraph.open(), Person.class.getPackage());
+            <pre class="prettyprint">Graph g = TinkerGraph.open();
+
+FramedGraph graph = new FramedGraph(g,  Package.getPackage("com.company.application.model"));
 
 Person person = graph.addVertex(1, Person.class);
 person.setName("alice");
 
 List&lt;Person&gt; result = graph.V(Person.class).has("name", "alice").toList();
 assertEquals(1, result.size());</pre>
-			<p>Peapod is designed to have minimal overhead because code generation happens <u>at compile time</u> using Java annotation processors and reflection is limited to the absolute minimum <u>only at startup time</u>. The generated code is transparent can be easily debugged by the developer.</p>
+			<p>Peapod is designed to have minimal overhead because code generation happens <u>at compile time</u> using Java annotation processors and reflection is limited to the absolute minimum <u>only at startup time</u>. The generated source code is transparent can be easily debugged.</p>
 
             <h3 id="framing">Framing</h3>
             <p>Define your domain model using annotated anonymous classes. Peapod will generate TinkerPop 3-compliant source code to traverse and manipulate your graph.</p>
 
             <h4>Vertices</h4>
-            <p>Create an abstract class and annotate with <code>@peapod.annotations.Vertex</code>. The class simple name will act as vertex label. You can alter this by setting the annotation value.</p>
+            <p>Create an abstract class and annotate with <code>@peapod.annotations.Vertex</code>.</p>
             <pre class="prettyprint">@Vertex
 public abstract class Person {}</pre>
-			<p>Next, define a list of vertex properties using abstract JavaBean setter and getter methods. The JavaBean property name will be used as vertex property name.</p>
+            <p>The class simple name will act as vertex label. You can alter this by setting the annotation value.</p>
+            <pre class="prettyprint">@Vertex("individual")
+public abstract class Person {}</pre>
+			<p>Next, define a list of vertex properties using abstract JavaBean setter and getter methods.</p>
             <pre class="prettyprint">@Vertex
 public abstract class Person {
   public abstract String getName();
   public abstract void setName(String name);
 }</pre>
-			<p>The property name can be altered by adding the <code>@peapod.annotations.Property</code> annotation to any of the JavaBean methods.</p>
+			<p>The JavaBean property name will be used as vertex property name. The property name can be altered by adding the <code>@peapod.annotations.Property</code> annotation to any of the JavaBean methods.</p>
             <pre class="prettyprint">@Vertex
 public abstract class Person {
   @Property("name")
@@ -101,7 +107,7 @@ public abstract class Person {
 }</pre>
 
             <h4>Edges</h4>
-            <p>In a similar way, you can frame TinkerPop 3 edges. The class simple name <u>in lowercase</u> will act as the edge label. You specify the adjacent vertices by using the <code>@In</code> and <code>@Out</code> annotations.</p>
+            <p>In a similar way, you can frame TinkerPop 3 edges. The class simple name <u>in lowercase</u> will act as the edge label. Add any edge properties and specify at most the two adjacent vertices by using the <code>@In</code> and <code>@Out</code> annotations.</p>
             <pre class="prettyprint">@Edge
 public abstract class Created {
   public abstract Float getWeight();
@@ -113,14 +119,14 @@ public abstract class Created {
   public abstract Software getSoftware();
 }
 </pre>
-            <p>Next, you enrich the framed vertex classes with relations to the edge classes.</p>
+            <p>Next, you can integrate the framed edge class in the corresponding vertex classes. The direction is <u>by default outgoing.</u></p>
             <pre class="prettyprint">@Vertex
 public abstract class Person {
   public abstract List&lt;Created&gt; getCreated();
   public abstract Created addCreated(Software software);
   public abstract Created removeCreated(Software software);
 }</pre>
-            <p>Whenever you don't like to frame the edge as a separate class, you can directly define a vertex relationship and annotate with <code>@peapod.annotations.Edge</code>. The direction is <u>by default outgoing.</u></p>
+            <p>If you don't need to explicitely frame the edge, you can also create direct relationships between vertices and annotate the method with <code>@Edge</code>. By default the JavaBean property name acts as edge label, but this can be overridden by setting the annotation value</p>
             <pre class="prettyprint">@Vertex
 public abstract class Person {
   @Edge("created")
@@ -128,7 +134,7 @@ public abstract class Person {
   public abstract void addSoftware(Software software);
   public abstract void removeSoftware(Software software);
 }</pre>
-            <p>At this moment, only getter methods can be defined with a different direction, like <code>@In</code> or <code>@Both</code>.</p>
+            <p><strong>Attention</strong>: at this moment, only getter methods can change the default direction, which is outgoing, by adding <code>@In</code> or <code>@Both</code> annotations. These annotatoins are ignored on setter, adder and remover methods.</p>
             <pre class="prettyprint">@Vertex
 public abstract class Person {
   @In
@@ -156,7 +162,9 @@ public abstract class Person {
 
             <h3 id="framedgraph">Framed graph</h3>
             <p>The framed graph wraps a TinkerPop 3 <code>Graph</code> and delegates all queries and graph manipulations to the underlying graph. <code>FramedGraph</code> must be initialized with a base package. Peapod will recursively scan the provided package and search for framing classes annotated with <code>@Vertex</code>, <code>@VertexProperty</code> or <code>@Edge</code>.</p>
-            <pre class="prettyprint">FramedGraph graph = new FramedGraph(TinkerGraph.open(), Package.getPackage("org.bayofmany.application.model"));</pre>
+            <pre class="prettyprint">Graph g = TinkerGraph.open();
+
+FramedGraph graph = new FramedGraph(g,  Package.getPackage("com.company.application.model"));</pre>
 			<p>You create new vertices by specifying the framing class and an optional identifier if the TinkerPop 3 graph database supports it.</p>
             <pre class="prettyprint">Person person = graph.addVertex(1, Person.class);
 person.setName("alice");</pre>
@@ -188,12 +196,12 @@ assertThat(marko.getKnowsPersonsOlderThan(30), contains(josh));</pre>
 
             <h3 id="download">Download</h3>
             <p><a href="https://search.maven.org/remote_content?g=org.bayofmany.peapod&a=peapod&v=LATEST" class="dl version-href">&darr; <span class="version-tag">Latest</span> JAR</a></p>
-            <p>The source code to the Peapod, its samples, and this website is <a href="http://github.com/bayofmany/peapod">available on GitHub</a>.</p>
+            <p>The source code to Peapod, its samples, and this website is <a href="http://github.com/bayofmany/peapod">available on GitHub</a>.</p>
             <h4>Maven</h4>
             <pre class="prettyprint">&lt;dependency>
-  &lt;groupId>org.bayofmany.peapod&lt;/groupId>
-  &lt;artifactId>peapod&lt;/artifactId>
-  &lt;version><span class="version pln"><em>0.1.0</em></span>&lt;/version>
+  &lt;groupId><span class="pln">org.bayofmany.peapod</span>&lt;/groupId>
+  &lt;artifactId><span class="pln">peapod</span>&lt;/artifactId>
+  &lt;version><span class="pln">0.1.0</span>&lt;/version>
 &lt;/dependency></pre>
             <p>Peapod requires at minimum Java 8.</p>
 
