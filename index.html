@@ -134,7 +134,7 @@ public abstract class Person {
   public abstract void addSoftware(Software software);
   public abstract void removeSoftware(Software software);
 }</pre>
-            <p><strong>Attention</strong>: at this moment, only getter methods can change the default direction, which is outgoing, by adding <code>@In</code> or <code>@Both</code> annotations. These annotatoins are ignored on setter, adder and remover methods.</p>
+            <p><strong>Attention</strong>: at this moment, only getter methods can change the default direction (outgoing) by adding <code>@In</code> or <code>@Both</code> annotations. These annotations are ignored on setter, adder and remover methods.</p>
             <pre class="prettyprint">@Vertex
 public abstract class Person {
   @In
@@ -144,7 +144,7 @@ public abstract class Person {
 
             <h4>Meta-properties</h4>
             <p>Peapod supports meta-properties which is a new feature of TinkerPop 3. You simply define a framing class for the vertex property and add properties which will be mapped onto meta-properties. </p>
-			<p>You must obligatory implement the <code>FramedVertexProperty</code> interface in order to specify the vertex property type. <code>FramedVertexProperty</code> defines a <code>getValue()</code> and <code>setValue(T t)</code> method to alter the property value.</p>
+			<p>You must obligatory implement the <code>FramedVertexProperty</code> interface in order to specify the vertex property type. <code>FramedVertexProperty</code> defines a <code>T getValue()</code> and <code>void setValue(T)</code> method to alter the property value.</p>
 			<pre>@VertexProperty
 public abstract class Name implements FramedVertexProperty&lt;String&gt; {
     public abstract String getAcl();
