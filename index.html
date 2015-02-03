@@ -76,7 +76,7 @@ person.setName("alice");
 List&lt;Person&gt; result = graph.V(Person.class).has("name", "alice").toList();
 assertEquals(1, result.size());</pre>
 			<p>Peapod is designed to have minimal overhead because code generation happens <u>at compile time</u> using Java annotation processors and reflection is limited to the absolute minimum <u>only at startup time</u>. The generated source code is transparent can be easily debugged.</p>
-			<p>Traversals in Peapod 0.1.0 are still basic. The future goal is to generate more advanced traversal classes using the <a href="http://www.tinkerpop.com/docs/3.0.0.M7/#_domain_specific_languages" target="_blank">DSL framework</a> in TinkerPop 3. Because the graph structure is defined by the framing classes, Peapod would be able to generate these complex traversal classes easily.</p>
+			<p><em>Traversals in Peapod 0.1.0 are still basic. The future goal is to have more advanced traversals  using the <a href="http://www.tinkerpop.com/docs/3.0.0.M7/#_domain_specific_languages" target="_blank">DSL framework</a> in TinkerPop 3. Because the graph structure is defined by the framing classes, Peapod could generate these complex traversal classes easily.</em></p>
 
             <h3 id="framing">Framing</h3>
             <p>Define your domain model using annotated anonymous classes. Peapod will generate TinkerPop 3-compliant source code to traverse and manipulate your graph.</p>
