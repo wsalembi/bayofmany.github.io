@@ -44,7 +44,7 @@
           <div class="span9">
             <h3 id="introduction">Introduction</h3>
             <p>Peapod maps your <a href="http://www.tinkerpop.com/docs/3.0.0.M7/" target="_blank">TinkerPop 3</a> graph onto a rich Java domain model. Peapod is developed as an alternative to Frames in TinkerPop 2.</p>
-			<p><strong>Disclaimer: version 0.1.0 is still an early and experimental release.</strong></p>
+			<p><strong>Disclaimer: version 0.2.0 is still an  experimental release using Apache Tinkerpop 3.0.0.M9-incubating.</strong></p>
 			<p>You start by specifying your graph structure through abstract classes, enriched with Peapod annotations. Peapod will then generate <u>at compile-time</u> all the necessary implementation classes, attempting to reduce boilerplate code for basic graph access and traversals.</p>
 	    <p>Peapod favors convention over configuration and therefore is simpler to use than TinkerPop 2 Frames</p>
 	    <p><u>Example:</u></p>
@@ -76,7 +76,7 @@ person.setName("alice");
 List&lt;Person&gt; result = graph.V(Person.class).has("name", "alice").toList();
 assertEquals(1, result.size());</pre>
 			<p>Peapod is designed to have minimal overhead because code generation happens <u>at compile time</u> using Java annotation processors and reflection is limited to the absolute minimum <u>only at startup time</u>. The generated source code is transparent can be easily debugged.</p>
-			<p><em>Traversals in Peapod 0.1.0 are still basic. The future goal is to have more advanced traversals  using the <a href="http://www.tinkerpop.com/docs/3.0.0.M7/#_domain_specific_languages" target="_blank">DSL framework</a> in TinkerPop 3. Because the graph structure is defined by the framing classes, Peapod could generate these complex traversal classes easily.</em></p>
+			<p><em>Traversals in Peapod 0.2.0 are still basic. The future goal is to have more advanced traversals  using the <a href="http://www.tinkerpop.com/docs/3.0.0.M7/#_domain_specific_languages" target="_blank">DSL framework</a> in TinkerPop 3. Because the graph structure is defined by the framing classes, Peapod could generate these complex traversal classes easily.</em></p>
 
             <h3 id="framing">Framing</h3>
             <p>Define your domain model using annotated anonymous classes. Peapod will generate TinkerPop 3-compliant source code to traverse and manipulate your graph.</p>
@@ -198,7 +198,7 @@ assertEquals("alice", person.getName());</pre>
 assertEquals(1, result.size());</pre>
 
             <h3 id="traversals">Traversals</h3>
-			<p>Traversals in Peapod 0.1.0 are still very basic. The future goal is to generate more advanced traversal classes using the <a href="http://www.tinkerpop.com/docs/3.0.0.M7/#_domain_specific_languages" target="_blank">DSL framework</a> in TinkerPop 3. Because the graph structure is defined by the framing classes, Peapod would be able to define these traversal classes easily and save you from writing a lot of unnecessary boilerplate code.</p>
+			<p>Traversals in Peapod 0.2.0 are still very basic. The future goal is to generate more advanced traversal classes using the <a href="http://www.tinkerpop.com/docs/3.0.0.M7/#_domain_specific_languages" target="_blank">DSL framework</a> in TinkerPop 3. Because the graph structure is defined by the framing classes, Peapod would be able to define these traversal classes easily and save you from writing a lot of unnecessary boilerplate code.</p>
 			<p>Vertices can optionally implement the <code>FramedVertex</code> interface which defines a serie of traversal methods.</p>
             <pre class="prettyprint">@Vertex
 public abstract class Person FramedVertex&lt;Person&gt; {
@@ -220,7 +220,7 @@ assertThat(marko.getKnowsPersonsOlderThan(30), contains(josh));</pre>
             <pre class="prettyprint">&lt;dependency>
   &lt;groupId><span class="pln">org.bayofmany.peapod</span>&lt;/groupId>
   &lt;artifactId><span class="pln">peapod</span>&lt;/artifactId>
-  &lt;version><span class="pln">0.1.0</span>&lt;/version>
+  &lt;version><span class="pln">0.2.0</span>&lt;/version>
 &lt;/dependency></pre>
             <p>Peapod requires at minimum Java 8.</p>
 
